@@ -8,7 +8,8 @@ cd "${REPO_DIR:-/opt/hunyuan/HunyuanVideo-1.5}"
 source "${VENV_DIR:-/opt/hunyuan/venv-fa27}/bin/activate"
 
 export WRAPPER_PORT="${WRAPPER_PORT:-8000}"
-export HUNYUAN_MODEL_PATH="${HUNYUAN_MODEL_PATH:-.}"
+# Default to ckpts dir so transformer/vae paths resolve
+export HUNYUAN_MODEL_PATH="${HUNYUAN_MODEL_PATH:-ckpts}"
 export HUNYUAN_OUTPUT_DIR="${HUNYUAN_OUTPUT_DIR:-/opt/hunyuan/HunyuanVideo-1.5/outputs}"
 
 echo "Starting wrapper on port ${WRAPPER_PORT} with model_path=${HUNYUAN_MODEL_PATH}"
