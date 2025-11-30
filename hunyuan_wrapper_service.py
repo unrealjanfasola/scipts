@@ -273,6 +273,20 @@ def generate(
 ) -> GenerateResponse:
     _validate_request(req)
     task = _infer_task(req)
+    logger.info(
+        "request=%s task=%s res=%s model_path=%s steps=%s len=%s sr=%s offload=%s group_offload=%s overlap_group_offload=%s dtype=%s",
+        req.render_request_id,
+        task,
+        req.resolution,
+        req.model_path,
+        req.num_inference_steps,
+        req.video_length,
+        req.sr,
+        req.offloading,
+        req.group_offloading,
+        req.overlap_group_offloading,
+        req.dtype,
+    )
     _initialize_infer_state(req)
     pipe = _get_pipeline(req, task)
     output_path = _build_output_path(req)
@@ -310,8 +324,10 @@ def generate(
             **extra_kwargs,
         )
     except torch.cuda.OutOfMemoryError as exc:
+        logger.exception("request=%s CUDA OOM during generation", req.render_request_id)
         raise ServiceError("CUDA OOM during generation", retryable=True) from exc
     except Exception as exc:  # noqa: BLE001
+        logger.exception("request=%s pipeline execution failed", req.render_request_id)
         raise ServiceError(f"Pipeline execution failed: {exc}", retryable=False) from exc
 
     pre_sr_path: Optional[Path] = None
@@ -325,6 +341,7 @@ def generate(
         else:
             save_video(out.videos, str(output_path))
     except Exception as exc:  # noqa: BLE001
+        logger.exception("request=%s failed to save video", req.render_request_id)
         raise ServiceError(f"Failed to save video: {exc}", retryable=False) from exc
 
     duration = time.monotonic() - start
@@ -385,16 +402,25 @@ class WrapperHandler(BaseHTTPRequestHandler):
         try:
             payload = json.loads(self.rfile.read(content_length) or "{}")
         except json.JSONDecodeError:
+            logger.warning("invalid JSON from %s", self.address_string())
             self._json(400, {"error": "invalid_json"})
             return
 
+        render_id = payload.get("render_request_id", "<unknown>")
         try:
             req = _normalize_request(payload)
             result = generate(req)
             self._json(200, {"result": asdict(result)})
         except ValidationError as exc:
+            logger.warning("request=%s validation error: %s", render_id, exc)
             self._json(400, {"error": "validation", "message": str(exc)})
         except ServiceError as exc:
+            logger.exception(
+                "request=%s service error retryable=%s: %s",
+                render_id,
+                getattr(exc, "retryable", False),
+                exc,
+            )
             self._json(
                 500,
                 {
