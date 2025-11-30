@@ -27,13 +27,13 @@ ALLOWED_RESOLUTIONS = {"480p", "720p"}
 ALLOWED_DTYPES = {"bf16", "fp32"}
 
 REQUIRED_CKPTS = [
-    Path("ckpts/vision_encoder/siglip"),
-    Path("ckpts/text_encoder/Glyph-SDXL-v2"),
-    Path("ckpts/text_encoder/llm"),
-    Path("ckpts/text_encoder/byt5"),
-    Path("ckpts/vae"),
-    Path("ckpts/transformer"),
-    Path("ckpts/scheduler/scheduler_config.json"),
+    Path("vision_encoder/siglip"),
+    Path("text_encoder/Glyph-SDXL-v2"),
+    Path("text_encoder/llm"),
+    Path("text_encoder/byt5"),
+    Path("vae"),
+    Path("transformer"),
+    Path("scheduler/scheduler_config.json"),
 ]
 
 
