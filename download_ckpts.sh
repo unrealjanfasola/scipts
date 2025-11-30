@@ -20,10 +20,14 @@ HF_TOKEN="$HF_TOKEN" hf download tencent/HunyuanVideo-1.5 --repo-type model \
   --include "text_encoder/**" >"$LOG" 2>&1
 
 echo "Ensuring Glyph and Qwen LLM ckpts ..."
+# Glyph lives on ModelScope; skip if repo not found
 HF_TOKEN="$HF_TOKEN" hf download AI-ModelScope/Glyph-SDXL-v2 --repo-type model \
-  --local-dir "$REPO_DIR/ckpts/text_encoder/Glyph-SDXL-v2" >>"$LOG" 2>&1
+  --local-dir "$REPO_DIR/ckpts/text_encoder/Glyph-SDXL-v2" >>"$LOG" 2>&1 || \
+  echo "Glyph-SDXL-v2 download skipped (repo not found); populate manually if needed" >>"$LOG"
+# Qwen on HF (requires access)
 HF_TOKEN="$HF_TOKEN" hf download Qwen/Qwen2.5-VL-7B-Instruct --repo-type model \
-  --local-dir "$REPO_DIR/ckpts/text_encoder/llm" >>"$LOG" 2>&1
+  --local-dir "$REPO_DIR/ckpts/text_encoder/llm" >>"$LOG" 2>&1 || \
+  echo "Qwen2.5-VL-7B-Instruct download skipped (repo not accessible); populate manually if needed" >>"$LOG"
 
 if [[ ! -d "$REPO_DIR/ckpts/vision_encoder/siglip" ]]; then
   echo "Downloading SigLIP ..."
