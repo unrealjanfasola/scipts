@@ -25,9 +25,16 @@ Quick steps to run the warm wrapper service and exercise a generate call.
   HF_HUB_DISABLE_PROGRESS_BARS=1 HUGGINGFACE_HUB_DISABLE_PROGRESS_BARS=1 \
   hf download ... > /tmp/hf_download.log 2>&1
   ```
-- Scripts to automate on host (copy these from `hunyuanvideo-1.5/` into `/opt/hunyuan/HunyuanVideo-1.5/`):
+- Bundle repo: `https://github.com/unrealjanfasola/scipts.git`
+  ```
+  git clone https://github.com/unrealjanfasola/scipts.git /root/hunyuan-setup
+  cd /root/hunyuan-setup
+  HF_TOKEN=... ./setup.sh        # full setup + start wrapper
+  ./setup.sh --only-wrapper-start  # just restart wrapper/health after setup
+  ```
+  Scripts inside:
   - `download_ckpts.sh` – pulls transformer/SigLIP/byt5 (uses `HF_TOKEN`, logs to `/tmp/hf_download.log`)
-  - `start_wrapper.sh` – stops old wrapper, activates venv, starts service in foreground (set `HUNYUAN_MODEL_PATH=.`)
+  - `start_wrapper.sh` – stops old wrapper, activates venv, starts service (set `HUNYUAN_MODEL_PATH=.`)
   - `generate.sh` – posts a payload file (default `generate_payload.json`) to `localhost:8000/generate`
 - If you downloaded ckpts before cloning, preserve them during reclone:
   ```
