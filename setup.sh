@@ -61,10 +61,21 @@ echo "== Stage 6: start wrapper =="
 REPO_DIR="$REPO_DIR" VENV_DIR="$VENV_DIR" START_BACKGROUND=1 ./start_wrapper.sh
 
 echo "== Stage 7: health check =="
-if curl -s --max-time 10 http://localhost:8000/health | grep -q '\"ready\": true'; then
-  echo "Wrapper healthy on http://localhost:8000"
-else
-  echo "Health check failed; see /tmp/hy_wrapper.log" >&2
+HEALTH_URL="http://localhost:${WRAPPER_PORT:-8000}/health"
+health_resp=""
+for attempt in {1..10}; do
+  health_resp=$(curl -s --max-time 5 "$HEALTH_URL" || true)
+  if echo "$health_resp" | grep -q '\"ready\": true'; then
+    echo "Wrapper healthy on $HEALTH_URL"
+    break
+  fi
+  echo "Health not ready yet (attempt $attempt); retrying..."
+  sleep 3
+done
+
+if ! echo "$health_resp" | grep -q '\"ready\": true'; then
+  echo "Health check failed; last response: ${health_resp:-<empty>} (log: /tmp/hy_wrapper.log)" >&2
+  exit 1
 fi
 
 echo "== Done =="
