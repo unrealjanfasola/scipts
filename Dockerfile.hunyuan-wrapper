@@ -1,0 +1,51 @@
+FROM nvidia/cuda:12.8.0-cudnn-runtime-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_WARN_SCRIPT_LOCATION=1 \
+    HF_HUB_DISABLE_PROGRESS_BARS=1
+
+RUN apt-get -qq update >/dev/null && \
+    apt-get -qq install -y --no-install-recommends \
+      python3 python3-venv python3-pip python3-dev \
+      ffmpeg build-essential git libgl1 libglib2.0-0 \
+      ca-certificates curl >/dev/null && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Prebuilt FlashAttention wheel (mirrors host)
+COPY vendor/wheels/flash_attn-2.7.4.post1-0rtx5090torch270cu128cxx11abiTRUE-cp310-cp310-linux_x86_64.whl /wheels/
+# Torch constraints to pin cu128 stack (staged at build context root)
+COPY constraints-cu128.txt /tmp/constraints-cu128.txt
+
+ARG REPO_URL=https://github.com/Tencent-Hunyuan/HunyuanVideo-1.5
+RUN git clone "$REPO_URL" /app/HunyuanVideo-1.5
+
+# Align torch/torchvision/torchaudio pins in requirements to constraints
+RUN sed -i 's/^torch.*/torch==2.7.0+cu128/' /app/HunyuanVideo-1.5/requirements.txt && \
+    sed -i 's/^torchvision.*/torchvision==0.22.0+cu128/' /app/HunyuanVideo-1.5/requirements.txt && \
+    sed -i 's/^torchaudio.*/torchaudio==2.7.0+cu128/' /app/HunyuanVideo-1.5/requirements.txt
+
+RUN python3 -m venv /opt/hunyuan/venv && \
+    . /opt/hunyuan/venv/bin/activate && \
+    pip install --upgrade pip --quiet && \
+    pip install --index-url https://download.pytorch.org/whl/cu128 \
+      torch==2.7.0+cu128 \
+      torchvision==0.22.0+cu128 \
+      torchaudio==2.7.0+cu128 --quiet && \
+    pip install /wheels/flash_attn-2.7.4.post1-0rtx5090torch270cu128cxx11abiTRUE-cp310-cp310-linux_x86_64.whl --quiet && \
+    pip install -c /tmp/constraints-cu128.txt -r /app/HunyuanVideo-1.5/requirements.txt --quiet
+
+ENV PATH=/opt/hunyuan/venv/bin:$PATH
+ENV PYTHONPATH=/app/HunyuanVideo-1.5
+ENV PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:128
+ENV OMP_NUM_THREADS=1
+ENV WORLD_SIZE=1
+ENV LOCAL_RANK=0
+
+WORKDIR /app/HunyuanVideo-1.5
+
+# Expect ckpts mounted at runtime to /app/HunyuanVideo-1.5/ckpts
+CMD ["bash"]

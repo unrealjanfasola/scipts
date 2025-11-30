@@ -1,0 +1,13 @@
+{
+  "render_request_id": "rr-gold-002",
+  "prompt": "she coughs up a golden coins",
+  "image_path": "/root/hunyuan-setup/assetr.png",
+  "resolution": "480p",
+  "num_inference_steps": 30,
+  "video_length": 121,
+  "sr": false,
+  "rewrite": true,
+  "offloading": true,
+  "group_offloading": true,
+  "overlap_group_offloading": true
+}

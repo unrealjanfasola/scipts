@@ -1,0 +1,4 @@
+# Pinned to mirror host stack
+torch==2.7.0+cu128
+torchvision==0.22.0+cu128
+torchaudio==2.7.0+cu128
