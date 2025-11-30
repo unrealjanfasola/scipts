@@ -20,10 +20,21 @@ HF_TOKEN="$HF_TOKEN" hf download tencent/HunyuanVideo-1.5 --repo-type model \
   --include "text_encoder/**" >"$LOG" 2>&1
 
 echo "Ensuring Glyph and Qwen LLM ckpts ..."
-# Glyph lives on ModelScope; skip if repo not found
-HF_TOKEN="$HF_TOKEN" hf download AI-ModelScope/Glyph-SDXL-v2 --repo-type model \
-  --local-dir "$REPO_DIR/ckpts/text_encoder/Glyph-SDXL-v2" >>"$LOG" 2>&1 || \
-  echo "Glyph-SDXL-v2 download skipped (repo not found); populate manually if needed" >>"$LOG"
+# Glyph lives on ModelScope; prefer ModelScope CLI and symlink into text_encoder
+GLYPH_DIR="$REPO_DIR/ckpts/text_encoder_2/Glyph-SDXL-v2"
+GLYPH_LINK="$REPO_DIR/ckpts/text_encoder/Glyph-SDXL-v2"
+mkdir -p "$(dirname "$GLYPH_DIR")" "$REPO_DIR/ckpts/text_encoder"
+if [[ ! -d "$GLYPH_DIR" ]]; then
+  if command -v modelscope >/dev/null 2>&1; then
+    modelscope download --model AI-ModelScope/Glyph-SDXL-v2 --local_dir "$GLYPH_DIR" >>"$LOG" 2>&1 || \
+      echo "Glyph-SDXL-v2 download skipped (ModelScope fetch failed); populate manually if needed" >>"$LOG"
+  else
+    echo "modelscope CLI not found; Glyph-SDXL-v2 not downloaded." >>"$LOG"
+  fi
+fi
+if [[ -d "$GLYPH_DIR" && ! -e "$GLYPH_LINK" ]]; then
+  ln -s ../text_encoder_2/Glyph-SDXL-v2 "$GLYPH_LINK"
+fi
 # Qwen on HF (requires access)
 HF_TOKEN="$HF_TOKEN" hf download Qwen/Qwen2.5-VL-7B-Instruct --repo-type model \
   --local-dir "$REPO_DIR/ckpts/text_encoder/llm" >>"$LOG" 2>&1 || \
