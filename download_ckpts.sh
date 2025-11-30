@@ -15,7 +15,9 @@ export HUGGINGFACE_HUB_DISABLE_PROGRESS_BARS=1
 
 echo "Downloading core ckpts into $REPO_DIR/ckpts ..."
 HF_TOKEN="$HF_TOKEN" hf download tencent/HunyuanVideo-1.5 --repo-type model \
-  --local-dir "$REPO_DIR/ckpts" --include "transformer/480p_i2v/*" >"$LOG" 2>&1
+  --local-dir "$REPO_DIR/ckpts" --include "transformer/480p_i2v/*" \
+  --include "vae/*" --include "scheduler/scheduler_config.json" \
+  --include "text_encoder/**" >"$LOG" 2>&1
 
 if [[ ! -d "$REPO_DIR/ckpts/vision_encoder/siglip" ]]; then
   echo "Downloading SigLIP ..."
@@ -28,5 +30,7 @@ if [[ ! -d "$REPO_DIR/ckpts/text_encoder/byt5" ]]; then
   HF_TOKEN="$HF_TOKEN" hf download google/byt5-small --repo-type model \
     --local-dir "$REPO_DIR/ckpts/text_encoder/byt5" >>"$LOG" 2>&1
 fi
+
+echo "Download log: $LOG"
 
 echo "Done. Logs: $LOG"
