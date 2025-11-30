@@ -19,6 +19,12 @@ HF_TOKEN="$HF_TOKEN" hf download tencent/HunyuanVideo-1.5 --repo-type model \
   --include "vae/*" --include "scheduler/scheduler_config.json" \
   --include "text_encoder/**" >"$LOG" 2>&1
 
+echo "Ensuring Glyph and Qwen LLM ckpts ..."
+HF_TOKEN="$HF_TOKEN" hf download AI-ModelScope/Glyph-SDXL-v2 --repo-type model \
+  --local-dir "$REPO_DIR/ckpts/text_encoder/Glyph-SDXL-v2" >>"$LOG" 2>&1
+HF_TOKEN="$HF_TOKEN" hf download Qwen/Qwen2.5-VL-7B-Instruct --repo-type model \
+  --local-dir "$REPO_DIR/ckpts/text_encoder/llm" >>"$LOG" 2>&1
+
 if [[ ! -d "$REPO_DIR/ckpts/vision_encoder/siglip" ]]; then
   echo "Downloading SigLIP ..."
   HF_TOKEN="$HF_TOKEN" hf download black-forest-labs/FLUX.1-Redux-dev --repo-type model \
